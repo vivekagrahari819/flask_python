@@ -36,7 +36,7 @@
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
     var options = {
-        "key": "rzp_test_qwUWbYhsbam1oJ", // Replace with your actual key
+        "key": "", // Replace with your actual key
         "amount": "{{ total_amount*100 }}", // Amount in paise
         "currency": "INR",
         "order_id": "{{ order_id }}", // Order ID created by Razorpay
@@ -66,3 +66,4 @@
 </script>
 
 {% endblock %}
+
