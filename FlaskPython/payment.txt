@@ -1,0 +1,180 @@
+
+# @app.route('/checkout', methods=['POST'])
+# def checkout():
+#     if 'user_id' not in session:
+#         flash('You need to login first.', 'danger')
+#         return redirect(url_for('login'))
+    
+#     user_id = session['user_id']
+#     cart_items = CartItem.query.filter_by(user_id=user_id).all()
+#     total_amount = sum(item.product.price * item.quantity for item in cart_items)
+    
+#     if total_amount == 0:
+#         flash('Your cart is empty.', 'danger')
+#         return redirect(url_for('view_cart'))
+
+#     try:
+#         order = razorpay_client.order.create(dict(
+#         amount=total_amount * 100,  # Amount in paise
+#         currency='INR',
+#         payment_capture='1'
+#         ))
+#         order_id = order['id']
+
+#         return render_template('checkout.html', order_id=order_id, total_amount=total_amount, cart_items=cart_items, user_name=session.get('username'), user_email=session.get('email'))
+
+#     except Exception as e:
+#         print("Error creating payment order:", e)  # Debug statement
+#         flash(f'An error occurred while processing your payment. Please try again. Error: {e}', 'danger')
+#         return redirect(url_for('view_cart'))
+
+
+
+# @app.route('/payment_success', methods=['POST'])
+# def payment_success():
+#     razorpay_order_id = request.form.get('razorpay_order_id')
+#     razorpay_payment_id = request.form.get('razorpay_payment_id')
+#     razorpay_signature = request.form.get('razorpay_signature')
+
+#     # Log received parameters for debugging
+#     print(f"Received Order ID: {razorpay_order_id}")
+#     print(f"Received Payment ID: {razorpay_payment_id}")
+#     print(f"Received Signature: {razorpay_signature}")
+
+#     # Verify the payment signature
+#     params_dict = {
+#         'razorpay_order_id': razorpay_order_id,
+#         'razorpay_payment_id': razorpay_payment_id,
+#         'razorpay_signature': razorpay_signature
+#     }
+
+#     try:
+#         razorpay_client.utility.verify_payment_signature(params_dict)
+#         # Payment verified successfully
+#         flash('Payment successful!', 'success')
+#         user_id = session.get('user_id')
+#         if user_id:
+#             CartItem.query.filter_by(user_id=user_id).delete()
+#             db.session.commit()
+#         return redirect(url_for('index'))  # Redirect to the homepage
+#     except razorpay.errors.SignatureVerificationError as e:
+#         # Payment verification failed
+#         print(f"Payment Verification Failed: {e}")
+#         flash('Payment verification failed. Please try again.', 'danger')
+#         return jsonify({'status': 'Payment Failed!'}), 400
+#     except Exception as e:
+#         # Handle other exceptions
+#         print(f"An error occurred: {e}")
+#         flash('An error occurred. Please try again later.', 'danger')
+#         return jsonify({'status': 'Payment Failed!'}), 400
+
+# @app.route('/checkout', methods=['POST'])
+# def checkout():
+#     if 'user_id' not in session:
+#         flash('You need to login first.', 'danger')
+#         return redirect(url_for('login'))
+    
+#     user_id = session['user_id']
+#     cart_items = CartItem.query.filter_by(user_id=user_id).all()
+#     total_amount = sum(item.product.price * item.quantity for item in cart_items)
+    
+#     if total_amount == 0:
+#         flash('Your cart is empty.', 'danger')
+#         return redirect(url_for('view_cart'))
+
+#     try:
+#         # Create a Razorpay order
+#         order = razorpay_client.order.create(dict(
+#             amount=int(total_amount * 100),  # Amount in paise
+#             currency='INR',
+#             payment_capture='1'
+#         ))
+#         order_id = order['id']
+
+#         # Save the order in your database
+#         new_order = Order(
+#             user_id=user_id,
+#             order_id=order_id,
+#             total_amount=total_amount,
+#             payment_status='Pending'
+#         )
+#         db.session.add(new_order)
+#         db.session.commit()
+
+#         return render_template('checkout.html', 
+#                                 order_id=order_id, 
+#                                 total_amount=total_amount, 
+#                                 cart_items=cart_items, 
+#                                 user_name=session.get('username'), 
+#                                 user_email=session.get('email'))
+
+#     except Exception as e:
+#         print("Error creating payment order:", e)
+#         flash(f'An error occurred while processing your payment. Please try again. Error: {e}', 'danger')
+#         return redirect(url_for('view_cart'))
+
+
+
+
+
+# @app.route('/payment_success', methods=['POST'])
+# def payment_success():
+#     razorpay_order_id = request.form.get('razorpay_order_id')
+#     razorpay_payment_id = request.form.get('razorpay_payment_id')
+#     razorpay_signature = request.form.get('razorpay_signature')
+
+#     print(f"Received Order ID: {razorpay_order_id}")
+#     print(f"Received Payment ID: {razorpay_payment_id}")
+#     print(f"Received Signature: {razorpay_signature}")
+
+#     params_dict = {
+#         'razorpay_order_id': razorpay_order_id,
+#         'razorpay_payment_id': razorpay_payment_id,
+#         'razorpay_signature': razorpay_signature
+#     }
+
+#     try:
+#         # Verify the payment signature
+#         razorpay_client.utility.verify_payment_signature(params_dict)
+#         print("Payment signature verified successfully!")
+
+#         # Update order status in the database
+#         order = Order.query.filter_by(order_id=razorpay_order_id).first()
+
+#         if order:
+#             order.payment_status = 'Success'
+#             db.session.commit()
+
+#             # Move cart items to OrderItem table
+#             cart_items = CartItem.query.filter_by(user_id=order.user_id).all()
+#             for item in cart_items:
+#                 order_item = OrderItem(
+#                     order_id=order.id,
+#                     product_id=item.product_id,
+#                     quantity=item.quantity,
+#                     price=item.product.price
+#                 )
+#                 db.session.add(order_item)
+
+#             # Clear the cart
+#             CartItem.query.filter_by(user_id=order.user_id).delete()
+#             db.session.commit()
+
+#             flash('Payment successful! Your order has been placed.', 'success')
+#             return redirect(url_for('my_orders'))
+
+#         else:
+#             flash('Order not found!', 'danger')
+#             return redirect(url_for('index'))
+
+#     except razorpay.errors.SignatureVerificationError as e:
+#         print(f"Payment Verification Failed: {e}")
+#         flash('Payment verification failed. Please try again.', 'danger')
+#         return redirect(url_for('index'))
+
+#     except Exception as e:
+#         print(f"An error occurred: {e}")
+#         flash('An error occurred. Please try again later.', 'danger')
+#         return redirect(url_for('index'))
+
+

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="text-center">My Orders</h2>
+  
+  {% if orders %}
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover">
+        <thead class="thead-dark">
+          <tr>
+            <th>Order ID</th>
+            <th>Total Amount (₹)</th>
+            <th>Payment Status</th>
+            <th>Created At (IST)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in orders %}
+          <tr>
+            <td>{{ order.order_id }}</td>
+            <td>₹{{ order.total_amount }}</td>
+            <td>
+              {% if order.payment_status == 'Pending' %}
+                <span class="badge badge-warning">Pending</span>
+              {% elif order.payment_status == 'Success' %}
+                <span class="badge badge-success">Success</span>
+              {% else %}
+                <span class="badge badge-danger">Failed</span>
+              {% endif %}
+            </td>
+            <td>{{ order.created_at_ist if order.created_at_ist else 'N/A' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-center">No orders found.</p>
+  {% endif %}
+</div>
+{% endblock %}

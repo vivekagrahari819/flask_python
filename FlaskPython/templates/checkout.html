@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Checkout{% endblock %}
+
+{% block content %}
+<h1>Checkout</h1>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in cart_items %}
+            <tr>
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>₹{{ item.product.price }}</td>
+                <td>₹{{ item.product.price * item.quantity }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<h3>Total: ₹{{ total_amount }}</h3>
+
+<form id="checkout-form" action="{{ url_for('payment_success') }}" method="POST">
+    <input type="hidden" name="razorpay_order_id" value="{{ order_id }}">
+    <input type="hidden" name="razorpay_payment_id" id="razorpay_payment_id">
+    <input type="hidden" name="razorpay_signature" id="razorpay_signature">
+    <button id="pay-btn" type="button">Pay with Razorpay Now</button>
+</form>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    var options = {
+        "key": "rzp_test_qwUWbYhsbam1oJ", // Replace with your actual key
+        "amount": "{{ total_amount*100 }}", // Amount in paise
+        "currency": "INR",
+        "order_id": "{{ order_id }}", // Order ID created by Razorpay
+        "name": "Shoes.com",
+        "description": "Thank you for your purchase",
+        "image": "https://images.pexels.com/photos/2529148/pexels-photo-2529148.jpeg?auto=compress&cs=tinysrgb&w=600",
+        "handler": function (response){
+            console.log("Payment Response:", response); // Debugging line
+            document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
+            document.getElementById('razorpay_signature').value = response.razorpay_signature;
+            document.getElementById('checkout-form').submit();
+        },
+        "prefill": {
+            "name": "{{ user_name }}",
+            "email": "{{ user_email }}"
+        },
+        "theme": {
+            "color": "#F37254"
+        }
+    };
+
+    document.getElementById('pay-btn').onclick = function(e) {
+        e.preventDefault();
+        var paymentObject = new Razorpay(options);
+        paymentObject.open();
+    };
+</script>
+
+{% endblock %}

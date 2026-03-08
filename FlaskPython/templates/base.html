@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}My Website{% endblock %}</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    #chatbot-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+    #chatbot-button {
+      background-color: #007bff;
+      color: white;
+      border-radius: 50%;
+      padding: 10px;
+      cursor: pointer;
+      font-size: 20px;
+      text-align: center;
+    }
+    #chatbox {
+      width: 300px;
+      height: 400px;
+      background-color: white;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      display: none; /* Initially hidden */
+      position: fixed;
+      bottom: 70px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    #chatbox-header {
+      background-color: #007bff;
+      color: white;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+    #chatbox-body {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+    }
+    #chatbox-messages {
+      flex-grow: 1;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+    #chatbox-input {
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 10px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body style="background-color: #13c69f;">
+  <nav class="navbar navbar-expand-lg sticky-top navbar-light active bg-light"
+   style="font-weight: bold;">
+    <a class="navbar-brand" href="{{ url_for('index') }}">Shoes.com</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" 
+    data-target="#navbarNav"
+      aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item"><a class="nav-link active" href="{{ url_for('index') }}">Home</a></li>
+        <li class="nav-item"><a class="nav-link active" href="{{ url_for('laqshya') }}">laqshya</a></li>
+        {% if 'user_id' in session %}
+          <li class="nav-item"><a class="nav-link active" href="{{ url_for('view_cart') }}">Cart ({{ cart_item_count }})
+          </a></li>
+          <li class="nav-item"><a class="nav-link active" href="{{ url_for('contact') }}">Contact</a></li>
+          <li class="nav-item"><a class="nav-link active" href="{{ url_for('blogs') }}">Blogs</a></li>
+          {% if session.get('username') != 'admin' %}
+            <li class="nav-item"><a class="nav-link active" href="{{ url_for('my_orders') }}">My Orders</a></li>
+          {% endif %}
+          <li class="nav-item">
+            <span class="nav-link active">Welcome, {{ session['username'] }}</span>
+          </li>
+          {% if session.get('username') == 'admin' %}
+            <li class="nav-item"><a class="nav-link active" href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link active" href="{{ url_for('manage_users') }}">Manage Users</a></li>
+            <li class="nav-item"><a class="nav-link active" href="{{ url_for('admin_orders') }}">View All Orders</a></li>
+          {% endif %}
+          <li class="nav-item"><a class="nav-link active" href="{{ url_for('logout') }}">Logout</a></li>
+        {% else %}
+          <li class="nav-item"><a class="nav-link active" href="{{ url_for('register') }}">Register</a></li>
+          <li class="nav-item"><a class="nav-link active" href="{{ url_for('login') }}">Login</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </nav>
+  
+
+  <div class="container mt-4">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="alert alert-dismissible fade show" role="alert">
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </div>
+
+  <!-- Chatbot Button and Box -->
+  <div id="chatbot-container">
+    <div id="chatbot-button" onclick="toggleChatbox()">💬</div>
+  </div>
+  <div id="chatbox">
+    <div id="chatbox-header">
+      <span>Chatbot</span>
+      <span onclick="toggleChatbox()" style="cursor: pointer;">&times;</span>
+    </div>
+    <div id="chatbox-body" style="background-image: url(https://images.pexels.com/photos/219837/pexels-photo-219837.jpeg?auto=compress&cs=tinysrgb&);background-size: cover;">
+      <div id="chatbox-messages"></div>
+      <input type="text" id="chatbox-input" placeholder="Type your message here..." onkeypress="handleEnter(event)">
+      <button id="send-btn" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+  <script>
+    // Function to toggle the chatbox visibility
+    function toggleChatbox() {
+      const chatbox = document.getElementById('chatbox');
+      if (chatbox.style.display === 'none' || chatbox.style.display === '') {
+        chatbox.style.display = 'flex';
+      } else {
+        chatbox.style.display = 'none';
+      }
+    }
+
+    // Function to handle sending message when pressing Enter
+    function handleEnter(event) {
+      if (event.key === 'Enter') {
+        sendMessage();
+      }
+    }
+
+    // Function to display messages in the chatbox
+    function displayMessage(sender, message) {
+      const messagesContainer = document.getElementById('chatbox-messages');
+      const newMessage = document.createElement('div');
+      newMessage.className = sender === 'user' ? 'user-message' : 'bot-message';
+      newMessage.textContent = message;
+      messagesContainer.appendChild(newMessage);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // Function to send user message to the backend
+    function sendMessage() {
+      const inputField = document.getElementById('chatbox-input');
+      const userMessage = inputField.value.trim();
+      if (userMessage !== '') {
+        displayMessage('user', userMessage);
+        fetch('/chatbot', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ message: userMessage }),
+        })
+        .then(response => response.json())
+        .then(data => {
+          displayMessage('bot', data.response);
+        })
+        .catch(error => {
+          displayMessage('bot', 'Error: Could not get a response.');
+        });
+        inputField.value = ''; // Clear input field
+      }
+    }
+
+    // Ensure chatbox is hidden initially
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('chatbox').style.display = 'none';
+    });
+  </script>
+</body>
+</html>

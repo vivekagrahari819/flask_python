@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<center><h2>Admin Dashboard</h2></center>
+<hr>
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="alert alert-dismissible fade show" role="alert">
+  {% for category, message in messages %}
+  <div class="alert alert-{{ category }}">{{ message }}</div>
+  {% endfor %}
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+{% endif %}
+{% endwith %}
+
+<div class="row mt-5">
+  <!-- Users Section -->
+  <div class="col">
+    <h3>Users</h3>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <td>{{ user.id }}</td>
+          <td>{{ user.username }}</td>
+          <td>{{ user.email }}</td>
+          <td>
+            <!-- Edit User Form -->
+            <button class="btn btn-primary btn-sm" data-toggle="modal"
+             data-target="#editUserModal{{ user.id }}">Edit</button>
+            <a href="{{ url_for('delete_user', user_id=user.id) }}"
+             class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</a>
+
+            <!-- Edit User Modal -->
+            <div class="modal fade" id="editUserModal{{ user.id }}" tabindex="-1"
+             role="dialog" aria-labelledby="editUserModalLabel{{ user.id }}"
+              aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="editUserModalLabel{{ user.id }}">Edit User</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <form action="{{ url_for('edit_user', user_id=user.id) }}" method="POST">
+                    <div class="modal-body">
+                      <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" 
+                        value="{{ user.username }}" required>
+                      </div>
+                      <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" 
+                        value="{{ user.email }}" required>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                      <button type="submit" class="btn btn-primary">Save changes</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<hr>
+<!-- Products Section -->
+<div class="row mt-5">
+  <div class="col">
+    <h3>Products</h3>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Price</th>
+          <th>Image</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+        <tr>
+          <td>{{ product.id }}</td>
+          <td>{{ product.name }}</td>
+          <td>{{ product.description }}</td>
+          <td>{{ product.price }}</td>
+          <td>
+            {% if product.image %}
+            <img src="{{ url_for('static', filename='images/' + product.image) }}" alt="Product Image" width="100">
+            {% else %}
+            No Image
+            {% endif %}
+          </td>
+          <td>
+            <!-- Edit Product Form -->
+            <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editProductModal{{ product.id }}">Edit</button>
+            <a href="{{ url_for('delete_product', product_id=product.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</a>
+
+            <!-- Edit Product Modal -->
+            <div class="modal fade" id="editProductModal{{ product.id }}" tabindex="-1" role="dialog" aria-labelledby="editProductModalLabel{{ product.id }}" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="editProductModalLabel{{ product.id }}">Edit Product</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <form action="{{ url_for('edit_product', product_id=product.id) }}" method="POST" enctype="multipart/form-data">
+                    <div class="modal-body">
+                      <div class="form-group">
+                        <label for="name">Product Name</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ product.name }}" required>
+                      </div>
+                      <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" required>{{ product.description }}</textarea>
+                      </div>
+                      <div class="form-group">
+                        <label for="price">Price</label>
+                        <input type="number" step="0.01" class="form-control" id="price" name="price" value="{{ product.price }}" required>
+                      </div>
+                      <div class="form-group">
+                        <label for="image">Product Image</label>
+                        <input type="file" class="form-control-file" id="image" name="image">
+                        {% if product.image %}
+                        <p>Current Image:</p>
+                        <img src="{{ url_for('static', filename='images/' + product.image) }}" alt="Product Image" width="100">
+                        {% endif %}
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                      <button type="submit" class="btn btn-primary">Save changes</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<br><br><br><hr>
+<!-- Add Product Form -->
+<h3>Add New Product</h3>
+<form action="{{ url_for('add_product') }}" method="POST" enctype="multipart/form-data">
+  <div class="form-group">
+    <label for="name">Product Name</label>
+    <input type="text" class="form-control" id="name" name="name" required>
+  </div>
+  <div class="form-group">
+    <label for="description">Description</label>
+    <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+  </div>
+  <div class="form-group">
+    <label for="price">Price</label>
+    <input type="number" step="0.01" class="form-control" id="price" name="price" required>
+  </div>
+  <div class="form-group">
+    <label for="image">Product Image</label>
+    <input type="file" class="form-control-file" id="image" name="image" required>
+  </div>
+  <button type="submit" class="btn btn-primary">Add Product</button>
+</form>
+{% endblock %}
